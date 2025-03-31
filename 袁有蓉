@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>title is important</title>
+  </head>
+  <body>
+    <h1>一级标题</h1>
+    <div>
+      <p>
+        段落标记，a是行内元素，效果是这样的，<a 
+        >
+      </p>
+      <ol>
+        <li>这是列表</li>
+        <li>这是列表</li>
+        <li>这是列表</li>
+        <li>这是列表</li>
+      </ol>
+      <p>
+        <img src="th.jpg" alt="图片替代说明文字" width="100" /><img
+          src="http://pic2.bbzhi.com/dongmanbizhi/hellokitty/hellokitty_84593_10.jpg"
+          alt="说明文字"
+          width="200"
+        />
+      </p>
+      <table>
+        <tr>
+          <td>单元格1</td>
+          <td>单元格1</td>
+          <td>单元格1</td>
+        </tr>
+        <tr>
+          <td>单元格1</td>
+          <td>单元格1</td>
+          <td>单元格1</td>
+        </tr>
+        <tr>
+          <td>单元格1</td>
+          <td>单元格1</td>
+          <td>单元格1</td>
+        </tr>
+      </table>
+      <form action="https://www.zhihu.com/signin?next=%2F">
+        <input type="text" name="search_text" />
+        <input type="submit" />
+      </form>
+    </div>
+  </body>
+</html>
