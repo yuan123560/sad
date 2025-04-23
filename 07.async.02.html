@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+ 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JavaScript  异步编程练习</title>
+</head>
+
+<body>
+    <h1>JavaScript  异步编程练习</h1>
+    <div id="demo">
+
+    </div>
+<script>
+    async function getSomething() {
+        await setTimeout(function () {
+            console.log('1111111')
+        }, 2000)  
+    }
+    getSomething()
+    .then(
+        result => console.log('Async function finished successfully with result:', result)
+    )
+        console.log('2222222')
+        async function getLastPushedDate(owner, repo) {
+            const url = `https://api.github.com/repos/${owner}/${repo}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('网络响应失败');
+                } 
+                const data = await response.json();
+                return data.pushed_at;
+            } catch (error) {
+                console.error('获取最后推送时间失败:', error);
+                return null;
+               }
+            }
+
+            // 修正函数名调用和仓库名称
+           // 获取两个仓库的推送时间
+           Promise.all([
+               getLastPushedDate('yuan123560', 'sad'),
+               getLastPushedDate('yuan123560', 'sad')
+           ]).then(([time1, time2]) => {
+               const demoDiv = document.getElementById('demo');
+               const formatDate = (isoString) => 
+                   isoString ? new Date(isoString).toLocaleDateString('zh-CN') : '未提交';
+                   
+               demoDiv.innerHTML = `
+                   <table border="1" cellpadding="8">
+                       <tr>
+                           <th>作业名称</th>
+                           <th>最后提交时间</th>
+                       </tr>
+                       <tr>
+                           <td>第一次作业</td>
+                           <td>${formatDate(time1)}</td>
+                       </tr>
+                       <tr>
+                           <td>第二次作业</td>
+                           <td>${formatDate(time2)}</td>
+                       </tr>
+                   </table>
+               `;
+           }).catch(error => {
+               console.error('获取失败:', error);
+               demoDiv.innerHTML = "<p style='color:red'>数据加载失败，请检查控制台</p>";
+           });
+           // ... ecisting code ...
+
+    </script>
+</body>
+
+</html>
