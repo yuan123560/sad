@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QAnything 智能问答 - 新集成页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .status-loading {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .status-success {
+            background: #00b894;
+            color: white;
+        }
+
+        .status-error {
+            background: #e17055;
+            color: white;
+        }
+
+        .status-info {
+            background: #74b9ff;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .features {
+            text-align: left;
+            margin: 30px 0;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .features h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .features ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .features li {
+            padding: 5px 0;
+            color: #555;
+        }
+
+        .features li:before {
+            content: "✓";
+            color: #00b894;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🤖 QAnything 智能问答</h1>
+
+        <div class="description">
+            欢迎使用智能问答系统！我可以帮助您解答各种问题，提供准确、及时的信息支持。
+        </div>
+
+        <div class="features">
+            <h3>功能特点：</h3>
+            <ul>
+                <li>智能对话，自然语言理解</li>
+                <li>实时响应，快速获取答案</li>
+                <li>多领域知识覆盖</li>
+                <li>友好的用户界面</li>
+                <li>移动设备适配</li>
+            </ul>
+        </div>
+
+        <div id="status" class="status-indicator status-loading">正在初始化...</div>
+
+        <div class="button-group">
+            <button id="toggleChat" class="btn btn-primary">开始对话</button>
+            <button id="openWithMessage" class="btn btn-secondary">快速提问</button>
+            <button id="checkStatus" class="btn btn-info">检查状态</button>
+        </div>
+    </div>
+
+    <!-- QAnything 新集成脚本 -->
+    <script src="https://ai.youdao.com/saas/qanything/js/agent-iframe-min.js" id="qanything-iframe"
+        data-agent-src="https://ai.youdao.com/saas/qanything/#/bots/394F6136319A47A0/share" data-default-open="false"
+        data-drag="false" data-open-icon="https://download.ydstatic.com/ead/icon-qanything-iframe-btn.png"
+        data-close-icon="https://download.ydstatic.com/ead/icon-qanything-iframe-btn.png" defer>
+        </script>
+
+    <script>
+        class QAnythingManager {
+            constructor() {
+                this.isInitialized = false;
+                this.chatOpen = false;
+                this.retryCount = 0;
+                this.maxRetries = 3;
+                this.initPromise = null;
+
+                this.statusElement = document.getElementById('status');
+                this.toggleButton = document.getElementById('toggleChat');
+                this.messageButton = document.getElementById('openWithMessage');
+                this.statusButton = document.getElementById('checkStatus');
+
+                this.attachEventListeners();
+                this.initialize();
+            }
+
+            attachEventListeners() {
+                this.toggleButton.addEventListener('click', () => this.toggleChat());
+                this.messageButton.addEventListener('click', () => this.openWithMessage());
+                this.statusButton.addEventListener('click', () => this.checkStatus());
+
+                // 网络状态监听
+                window.addEventListener('online', () => this.handleNetworkRestore());
+                window.addEventListener('offline', () => this.handleNetworkLoss());
+            }
+
+            showStatus(message, type = 'info', details = '') {
+                this.statusElement.textContent = message;
+                this.statusElement.className = `status-indicator status-${type}`;
+
+                if (details) {
+                    console.log(`状态详情: ${details}`);
+                }
+
+                // 自动隐藏成功消息
+                if (type === 'success') {
+                    setTimeout(() => {
+                        this.statusElement.style.opacity = '0.7';
+                    }, 3000);
+                }
+            }
+
+            async checkNetworkConnection() {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                    const response = await fetch('https://www.baidu.com/favicon.ico', {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+                    return true;
+                } catch (error) {
+                    console.warn('网络连接检查失败:', error.message);
+                    return false;
+                }
+            }
+
+            async checkQAnythingService() {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                    const response = await fetch('https://ai.youdao.com/saas/qanything/js/agent-iframe-min.js', {
+                        method: 'HEAD',
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+                    return response.ok;
+                } catch (error) {
+                    console.warn('QAnything服务检查失败:', error.message);
+                    return false;
+                }
+            }
+
+            async waitForElement(selector, timeout = 10000) {
+                return new Promise((resolve, reject) => {
+                    const element = document.querySelector(selector);
+                    if (element) {
+                        resolve(element);
+                        return;
+                    }
+
+                    const observer = new MutationObserver((mutations) => {
+                        const element = document.querySelector(selector);
+                        if (element) {
+                            observer.disconnect();
+                            resolve(element);
+                        }
+                    });
+
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+
+                    setTimeout(() => {
+                        observer.disconnect();
+                        reject(new Error(`元素 ${selector} 在 ${timeout}ms 内未出现`));
+                    }, timeout);
+                });
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            async initialize() {
+                if (this.initPromise) {
+                    return this.initPromise;
+                }
+
+                this.initPromise = this._doInitialize();
+                return this.initPromise;
+            }
+
+            async _doInitialize() {
+                try {
+                    this.showStatus('正在初始化QAnything服务...', 'loading');
+
+                    // 1. 检查网络连接
+                    const networkOk = await this.checkNetworkConnection();
+                    if (!networkOk) {
+                        throw new Error('网络连接异常');
+                    }
+
+                    // 2. 检查QAnything服务
+                    const serviceOk = await this.checkQAnythingService();
+                    if (!serviceOk) {
+                        throw new Error('QAnything服务不可用');
+                    }
+
+                    // 3. 等待聊天按钮出现
+                    await this.waitForElement('#qanything-chatbot-button', 15000);
+
+                    this.isInitialized = true;
+                    this.showStatus('✓ QAnything初始化成功', 'success');
+
+                    console.log('QAnything初始化完成');
+
+                } catch (error) {
+                    console.error('QAnything初始化失败:', error);
+                    this.showStatus(`✗ 初始化失败: ${error.message}`, 'error');
+
+                    // 自动重试
+                    if (this.retryCount < this.maxRetries) {
+                        this.retryCount++;
+                        this.showStatus(`正在重试初始化 (${this.retryCount}/${this.maxRetries})...`, 'loading');
+                        await this.delay(3000);
+                        this.initPromise = null;
+                        return this.initialize();
+                    }
+
+                    throw error;
+                }
+            }
+
+            async toggleChat() {
+                try {
+                    if (!this.isInitialized) {
+                        this.showStatus('正在初始化，请稍候...', 'loading');
+                        await this.initialize();
+                    }
+
+                    const chatButton = document.getElementById('qanything-chatbot-button');
+                    if (chatButton) {
+                        chatButton.click();
+                        this.showStatus(this.chatOpen ? '聊天窗口已关闭' : '聊天窗口已打开', 'info');
+                        this.chatOpen = !this.chatOpen;
+                    } else {
+                        throw new Error('聊天按钮未找到');
+                    }
+                } catch (error) {
+                    console.error('切换聊天窗口失败:', error);
+                    this.showStatus('操作失败: ' + error.message, 'error');
+                }
+            }
+
+            async openWithMessage() {
+                try {
+                    if (!this.isInitialized) {
+                        this.showStatus('正在初始化，请稍候...', 'loading');
+                        await this.initialize();
+                    }
+
+                    // 打开聊天窗口
+                    const chatButton = document.getElementById('qanything-chatbot-button');
+                    if (chatButton && !this.chatOpen) {
+                        chatButton.click();
+                        this.chatOpen = true;
+                        await this.delay(1000);
+                    }
+
+                    this.showStatus('✓ 聊天窗口已打开，可以开始提问', 'success');
+
+                } catch (error) {
+                    console.error('打开聊天失败:', error);
+                    this.showStatus('打开聊天失败: ' + error.message, 'error');
+                }
+            }
+
+            async checkStatus() {
+                try {
+                    this.showStatus('正在检查服务状态...', 'loading');
+
+                    const [networkOk, serviceOk] = await Promise.all([
+                        this.checkNetworkConnection(),
+                        this.checkQAnythingService()
+                    ]);
+
+                    if (networkOk && serviceOk) {
+                        this.showStatus('✓ 网络连接正常，QAnything服务可用', 'success');
+                    } else if (!networkOk) {
+                        this.showStatus('✗ 网络连接异常', 'error');
+                    } else {
+                        this.showStatus('✗ QAnything服务不可用', 'error');
+                    }
+
+                } catch (error) {
+                    console.error('状态检查失败:', error);
+                    this.showStatus('状态检查失败: ' + error.message, 'error');
+                }
+            }
+
+            async handleNetworkRestore() {
+                console.log('网络连接已恢复');
+                this.showStatus('网络连接已恢复，正在重新初始化...', 'info');
+                await this.delay(1000);
+                this.retryInitialization();
+            }
+
+            handleNetworkLoss() {
+                console.log('网络连接已断开');
+                this.showStatus('网络连接已断开', 'error');
+            }
+
+            async retryInitialization() {
+                this.isInitialized = false;
+                this.initPromise = null;
+                this.retryCount = 0;
+
+                try {
+                    await this.initialize();
+                } catch (error) {
+                    console.error('重新初始化失败:', error);
+                }
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('开始初始化QAnything管理器...');
+            window.qanythingManager = new QAnythingManager();
+        });
+
+        // 全局错误处理
+        window.addEventListener('error', (event) => {
+            console.error('全局错误:', event.error);
+            if (window.qanythingManager) {
+                window.qanythingManager.showStatus(
+                    '发生未知错误，请刷新页面',
+                    'error'
+                );
+            }
+        });
+
+        // 未处理的Promise拒绝
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('未处理的Promise拒绝:', event.reason);
+            if (window.qanythingManager) {
+                window.qanythingManager.showStatus(
+                    '异步操作失败，请重试',
+                    'error'
+                );
+            }
+        });
+    </script>
+</body>
+
+</html>
