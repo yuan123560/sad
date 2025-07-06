@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript 异步编程练习</title>
+    <style>
+      table {
+        width: 50%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+</head>
+<body>
+    <h1>JavaScript 异步编程练习</h1>
+    <div id="demo"></div>
+    <table id="pushDatesTable">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>推送日期</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+    <script>
+        async function getPushDates(owner, repo) {
+            const url = `https://api.github.com/repos/${owner}/${repo}/events`;
+            try {
+                const response = await fetch(url);
+                if(!response.ok) {
+                    throw new Error('网络请求失败');
+                }
+                const data = await response.json();
+                // 过滤出 PushEvent 并提取日期
+                const pushDates = data
+                    .filter(event => event.type === 'PushEvent')
+                    .map(event => event.created_at);
+                return pushDates;
+            } catch(error) {
+                console.error('获取推送日期失败:', error);
+                return null;
+            }
+        }
+
+        // 示例调用
+        getPushDates('luo1-bot', 'luo111').then(dates => {
+            if(dates) {
+                const tableBody = document.querySelector('#pushDatesTable tbody');
+                dates.forEach((date, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${new Date(date).toLocaleString()}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                document.getElementById('demo').innerText = '无法获取推送日期';
+            }
+        });
+    </script>
+</body>
+</html>
